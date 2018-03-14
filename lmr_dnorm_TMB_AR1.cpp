@@ -9,14 +9,14 @@ Type objective_function<Type>::operator() ()
     DATA_MATRIX( U );           // covariates random effects
     
     DATA_IMATRIX( series );     // start index and number of locations in each flight
-    DATA_FACTOR( group );       // indicator for observer
-    DATA_INTEGER( J );          // number of observers
+    DATA_FACTOR( group );       // indicator for group
+    DATA_INTEGER( J );          // number of groups
     
     int n = Y.rows();           // number of data points
     
     int L = U.cols();           // number of random parameters
     
-    int nn = series.rows();     // number of flights
+    int nn = series.rows();     // number of series
     
     
     //RANDOM parameters;
@@ -28,7 +28,7 @@ Type objective_function<Type>::operator() ()
     PARAMETER_VECTOR(logSigma_B);
     
     // Correlation parameter of the AR process
-    PARAMETER(trphi);      // phi is a vector since there in one for each flight
+    PARAMETER(trphi);      // phi is common to all series
     
     // Transformed version of trphi. This will always be between -1 and 1.
     Type phi = 2.0 / (1.0 + exp(-trphi)) - 1.0;
@@ -54,7 +54,7 @@ Type objective_function<Type>::operator() ()
     // Declare res for the residuals
     vector<Type> res(n);
     
-    // auxiliary vector flight, helps fitting a differnt AR1 for each flight
+    // auxiliary vector to subset the residuals of each series
     vector<Type> subRes;
     
     
@@ -65,7 +65,7 @@ Type objective_function<Type>::operator() ()
     using namespace density;
     
     
-    // Probability of data conditional on fixed and random effect values
+    // Calculate expected values from the model
     for(int i = 0; i < n; ++i){
         
         mu[i] = 0.0;
@@ -96,7 +96,7 @@ Type objective_function<Type>::operator() ()
     }
     
 
-    // Neg. log-likelihood of the AR1 process on mu. For each flight
+    // Neg. log-likelihood of the AR1 process on mu. For each series
     for(int f = 0; f < nn; ++f){
         
         int s = series(f,0);
